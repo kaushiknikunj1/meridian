@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>How Meridian works</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root { --accent:#4A6FA5; --warn:#c0742a; --stop:#b4453a; --ok:#2e8b63;
+          --ink:#15181d; --ink-2:#4e565f; --muted:#868e99;
+          --line:rgba(140,150,165,.3); --card:rgba(255,255,255,.55); --bg:#f7f8fa; }
+  @media (prefers-color-scheme: dark) {
+    :root { --accent:#7fa3d8; --warn:#d9a05a; --stop:#e0756a; --ok:#58c495;
+            --ink:#e8eaee; --ink-2:#a8b0ba; --muted:#79818d;
+            --line:rgba(255,255,255,.14); --card:rgba(255,255,255,.035); --bg:#0e1116; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); line-height:1.7;
+         font-family:"Poppins",system-ui,-apple-system,sans-serif;
+         -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:960px; margin:0 auto; padding:3.5rem 1.6rem 6rem; }
+
+  .eyebrow { font-size:.74rem; font-weight:500; letter-spacing:.14em;
+             text-transform:uppercase; color:var(--accent); margin:0 0 .4rem; }
+  h1 { font-size:clamp(2rem,5vw,3rem); font-weight:600; letter-spacing:-.022em;
+       margin:0 0 .8rem; line-height:1.1; }
+  .lede { font-size:1.02rem; color:var(--ink-2); max-width:46rem; margin:0 0 2.6rem; }
+  h2 { font-size:1.3rem; font-weight:600; letter-spacing:-.012em;
+       margin:3.4rem 0 .5rem; padding-top:1.6rem; border-top:1px solid var(--line); }
+  h2:first-of-type { border-top:none; padding-top:0; }
+  h3 { font-size:1rem; font-weight:600; margin:2rem 0 .4rem; }
+  p { color:var(--ink-2); margin:0 0 1rem; max-width:46rem; }
+  strong { color:var(--ink); font-weight:600; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.86em;
+         background:rgba(130,140,160,.14); padding:.12em .4em; border-radius:.3em; }
+
+  figure { margin:1.6rem 0 2rem; }
+  figure svg { display:block; width:100%; max-width:100%; height:auto;
+               color:var(--ink); }
+  figcaption { font-size:.84rem; color:var(--muted); margin-top:.7rem;
+               max-width:44rem; }
+
+  .card { border:1px solid var(--line); border-radius:.9rem; background:var(--card);
+          padding:1.1rem 1.3rem; margin:1.4rem 0; }
+  .card p:last-child { margin-bottom:0; }
+
+  table { width:100%; border-collapse:collapse; margin:1.2rem 0 1.8rem;
+          font-size:.9rem; }
+  th { text-align:left; font-weight:600; font-size:.74rem; letter-spacing:.07em;
+       text-transform:uppercase; color:var(--muted); padding:.5rem .7rem .5rem 0;
+       border-bottom:1px solid var(--line); }
+  td { padding:.6rem .7rem .6rem 0; border-bottom:1px solid var(--line);
+       color:var(--ink-2); vertical-align:top; }
+  td:first-child { color:var(--ink); white-space:nowrap; }
+  td code { white-space:nowrap; }
+
+  .no { color:var(--stop); font-weight:600; }
+  .yes { color:var(--ok); font-weight:600; }
+  footer { margin-top:4rem; padding-top:1.4rem; border-top:1px solid var(--line);
+           font-size:.82rem; color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">Meridian</p>
+  <h1>How it works</h1>
+  <p class="lede">An autonomous agent that wakes every five minutes, decides what to look
+    at, looks, writes down what it concluded, and tells Nikunj. It runs on his Mac. The
+    whole thing is about 1,800 lines of Python and one page of HTML.</p>
+
+  <h2>The shape of it</h2>
+
+  <p>One rule explains most of the design: <strong>the model decides, and separate code
+    acts.</strong> The language model never touches the network, the filesystem or the
+    site. It reads a situation and returns a plan as JSON. A registry of six functions
+    carries that plan out, and refuses anything not on the list.</p>
+
+  <figure>
+    <svg viewBox="0 0 900 290" role="img" aria-label="One cycle: the loop assembles context, the model plans, the tool registry executes, the model writes up, and the result goes to Telegram and the database.">
+      <defs>
+        <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+                markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="1.4">
+
+        <!-- loop.py spine -->
+        <rect x="24" y="112" width="112" height="56" rx="9"/>
+        <rect x="246" y="112" width="128" height="56" rx="9"/>
+        <rect x="484" y="112" width="128" height="56" rx="9"/>
+        <rect x="722" y="112" width="140" height="56" rx="9"/>
+
+        <!-- brain, above -->
+        <rect x="246" y="16" width="128" height="52" rx="9" stroke="#7fa3d8"/>
+        <rect x="484" y="16" width="128" height="52" rx="9" stroke="#7fa3d8"/>
+
+        <!-- outputs, below -->
+        <rect x="722" y="212" width="140" height="48" rx="9" stroke="#2e8b63"/>
+
+        <line x1="136" y1="140" x2="240" y2="140" marker-end="url(#a)"/>
+        <line x1="374" y1="140" x2="478" y2="140" marker-end="url(#a)"/>
+        <line x1="612" y1="140" x2="716" y2="140" marker-end="url(#a)"/>
+
+        <!-- up to the model and back -->
+        <line x1="290" y1="112" x2="290" y2="72" marker-end="url(#a)" stroke="#7fa3d8"/>
+        <line x1="332" y1="68" x2="332" y2="108" marker-end="url(#a)" stroke="#7fa3d8"/>
+        <line x1="528" y1="112" x2="528" y2="72" marker-end="url(#a)" stroke="#7fa3d8"/>
+        <line x1="570" y1="68" x2="570" y2="108" marker-end="url(#a)" stroke="#7fa3d8"/>
+
+        <line x1="792" y1="168" x2="792" y2="208" marker-end="url(#a)" stroke="#2e8b63"/>
+
+        <!-- sleep and repeat -->
+        <path d="M792 168 L792 186 L80 186 L80 168" stroke-dasharray="4 4"
+              marker-end="url(#a)" opacity=".55"/>
+      </g>
+
+      <g font-size="12.5" fill="currentColor" text-anchor="middle">
+        <text x="80"  y="136">context</text>
+        <text x="80"  y="152" font-size="10.5" opacity=".6">last 8 cycles</text>
+        <text x="310" y="136">plan</text>
+        <text x="310" y="152" font-size="10.5" opacity=".6">which tools</text>
+        <text x="548" y="136">execute</text>
+        <text x="548" y="152" font-size="10.5" opacity=".6">registry only</text>
+        <text x="792" y="136">write up</text>
+        <text x="792" y="152" font-size="10.5" opacity=".6">4 fields</text>
+
+        <text x="310" y="38" fill="#7fa3d8">model</text>
+        <text x="310" y="54" font-size="10.5" fill="#7fa3d8" opacity=".75">decide()</text>
+        <text x="548" y="38" fill="#7fa3d8">model</text>
+        <text x="548" y="54" font-size="10.5" fill="#7fa3d8" opacity=".75">conclude()</text>
+
+        <text x="792" y="232" fill="#2e8b63">Telegram</text>
+        <text x="792" y="248" font-size="10.5" fill="#2e8b63" opacity=".8">+ SQLite</text>
+      </g>
+
+      <g font-size="10.5" fill="currentColor" opacity=".6" text-anchor="middle">
+        <text x="188" y="132">reads</text>
+        <text x="426" y="132">JSON plan</text>
+        <text x="664" y="132">results</text>
+        <text x="436" y="200">sleep 5 min, repeat</text>
+      </g>
+    </svg>
+    <figcaption>One cycle. The blue boxes are the only two moments a language model is
+      involved, and neither of them can act — they return text. Everything that touches
+      the outside world happens in the middle box, through six functions.</figcaption>
+  </figure>
+
+  <h2>The thinking part</h2>
+
+  <p>There is no API key and no model SDK. <code>brain.py</code> shells out to the Claude
+    Code CLI already installed on the Mac:</p>
+
+  <div class="card">
+    <code>claude -p "&lt;charter + context + question&gt;" --allowed-tools ""</code>
+    <p style="margin-top:.7rem;font-size:.9rem"><code>--allowed-tools ""</code> is the
+      important half. The CLI normally has file and shell access; stripped of tools it can
+      only read the prompt and write a reply. It is a reasoning engine with its hands in
+      its pockets.</p>
+  </div>
+
+  <p>It is called twice per cycle. <strong>First to plan:</strong> given the charter, the
+    last eight cycles, its own notes and the tool list, pick one thing worth doing and
+    name the calls. <strong>Then to conclude:</strong> given what came back, write it up.
+    Both replies are JSON, parsed by a brace-matching scanner that tolerates the model
+    wrapping its answer in prose.</p>
+
+  <p>If the model times out or returns something unparseable, the cycle is recorded as an
+    error, Nikunj is told, and the loop sleeps and tries again. One bad cycle never stops
+    the agent.</p>
+
+  <h2>What it can actually do</h2>
+
+  <p>The registry is the entire surface. An action absent from this table is not
+    forbidden by a rule the agent might argue with — <strong>there is no function that
+    performs it.</strong></p>
+
+  <table>
+    <thead><tr><th>Tool</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><code>fetch</code></td><td>Read one public page. HTTPS only, from an allowlist of 13 hosts. Returns text <em>and</em> the links it found.</td></tr>
+      <tr><td><code>site_profile</code></td><td>Nikunj's own <code>profile.json</code> and <code>llms.txt</code>.</td></tr>
+      <tr><td><code>search_hn</code></td><td>Search Hacker News stories. Reading only.</td></tr>
+      <tr><td><code>arxiv</code></td><td>Recent paper titles in a field.</td></tr>
+      <tr><td><code>remember</code></td><td>Write a note to its own store, to carry forward.</td></tr>
+      <tr><td><code>propose</code></td><td>Leave something for Nikunj to decide on.</td></tr>
+    </tbody>
+  </table>
+
+  <figure>
+    <svg viewBox="0 0 900 250" role="img" aria-label="A tool call passes four checks before running: the tool must exist, be on the agent's allowlist, carry no private arguments, and then it runs; every attempt including refusals is written to the audit log.">
+      <defs>
+        <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+                markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="20" y="42" width="118" height="50" rx="9"/>
+        <rect x="196" y="42" width="128" height="50" rx="9"/>
+        <rect x="382" y="42" width="128" height="50" rx="9"/>
+        <rect x="568" y="42" width="128" height="50" rx="9"/>
+        <rect x="754" y="42" width="124" height="50" rx="9" stroke="#2e8b63"/>
+        <rect x="382" y="176" width="128" height="46" rx="9" stroke="#b4453a"/>
+        <rect x="754" y="176" width="124" height="46" rx="9" opacity=".8"/>
+
+        <line x1="138" y1="67" x2="190" y2="67" marker-end="url(#b)"/>
+        <line x1="324" y1="67" x2="376" y2="67" marker-end="url(#b)"/>
+        <line x1="510" y1="67" x2="562" y2="67" marker-end="url(#b)"/>
+        <line x1="696" y1="67" x2="748" y2="67" marker-end="url(#b)" stroke="#2e8b63"/>
+
+        <!-- the three refusals converge on the top edge of "refused" -->
+        <path d="M260 92 L260 148 L406 148 L406 172" marker-end="url(#b)" stroke="#b4453a"/>
+        <path d="M446 92 L446 172" marker-end="url(#b)" stroke="#b4453a"/>
+        <path d="M632 92 L632 148 L486 148 L486 172" marker-end="url(#b)" stroke="#b4453a"/>
+
+        <!-- both outcomes are audited -->
+        <path d="M510 199 L748 199" marker-end="url(#b)" stroke-dasharray="4 4" opacity=".6"/>
+        <path d="M816 92 L816 172" marker-end="url(#b)" stroke-dasharray="4 4" opacity=".6"/>
+      </g>
+      <g font-size="12.5" fill="currentColor" text-anchor="middle">
+        <text x="79"  y="72">model asks</text>
+        <text x="260" y="66">exists?</text>
+        <text x="260" y="82" font-size="10.5" opacity=".6">in registry</text>
+        <text x="446" y="66">granted?</text>
+        <text x="446" y="82" font-size="10.5" opacity=".6">agent allowlist</text>
+        <text x="632" y="66">args clean?</text>
+        <text x="632" y="82" font-size="10.5" opacity=".6">no private keys</text>
+        <text x="816" y="72" fill="#2e8b63">runs</text>
+        <text x="446" y="197" fill="#b4453a">refused</text>
+        <text x="446" y="213" font-size="10.5" fill="#b4453a" opacity=".8">exception raised</text>
+        <text x="816" y="197">audit log</text>
+        <text x="816" y="213" font-size="10.5" opacity=".6">every attempt</text>
+      </g>
+      <g font-size="10.5" fill="#b4453a" opacity=".85" text-anchor="start">
+        <text x="268" y="122">no</text>
+        <text x="454" y="122">no</text>
+        <text x="640" y="122">no</text>
+      </g>
+      <g font-size="10.5" fill="currentColor" opacity=".55" text-anchor="middle">
+        <text x="629" y="192">both outcomes logged</text>
+      </g>
+    </svg>
+    <figcaption>Every tool call runs this gauntlet. Refusals are written to the audit log
+      alongside successes — the refusals are the evidence the boundary is real.</figcaption>
+  </figure>
+
+  <div class="card">
+    <p><strong class="no">Not in the registry, and therefore impossible:</strong>
+      create an account anywhere · post, comment or vote on any site · send email or
+      contact anyone · run a shell command · read a local file · edit Nikunj's website
+      content · touch his finances, vault, or the internal agent org in Vortex.</p>
+  </div>
+
+  <h2>Two audiences, kept apart</h2>
+
+  <p>Each cycle produces four fields. Two are written for Nikunj in private and two for
+    the public page, and <strong>only the public pair is ever rendered to HTML.</strong>
+    An entry with no public title is skipped entirely, so a blunt private note cannot
+    reach the website by accident.</p>
+
+  <figure>
+    <svg viewBox="0 0 900 260" role="img" aria-label="A cycle's four fields split: summary and thoughts go only to Telegram, public title and body go only to the website, separated by a wall.">
+      <defs>
+        <marker id="c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+                markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="24" y="96" width="140" height="56" rx="9"/>
+
+        <rect x="300" y="24" width="190" height="44" rx="8" stroke="#c0742a"/>
+        <rect x="300" y="78" width="190" height="44" rx="8" stroke="#c0742a"/>
+        <rect x="300" y="146" width="190" height="44" rx="8" stroke="#2e8b63"/>
+        <rect x="300" y="200" width="190" height="44" rx="8" stroke="#2e8b63"/>
+
+        <rect x="676" y="38" width="188" height="56" rx="9" stroke="#c0742a"/>
+        <rect x="676" y="170" width="188" height="56" rx="9" stroke="#2e8b63"/>
+
+        <line x1="164" y1="124" x2="294" y2="46"  marker-end="url(#c)" opacity=".75"/>
+        <line x1="164" y1="124" x2="294" y2="100" marker-end="url(#c)" opacity=".75"/>
+        <line x1="164" y1="124" x2="294" y2="168" marker-end="url(#c)" opacity=".75"/>
+        <line x1="164" y1="124" x2="294" y2="222" marker-end="url(#c)" opacity=".75"/>
+
+        <path d="M490 46 L580 46 L580 66" marker-end="url(#c)" stroke="#c0742a"/>
+        <path d="M490 100 L580 100 L580 80" stroke="#c0742a"/>
+        <line x1="580" y1="66" x2="670" y2="66" marker-end="url(#c)" stroke="#c0742a"/>
+
+        <path d="M490 168 L580 168 L580 192" marker-end="url(#c)" stroke="#2e8b63"/>
+        <path d="M490 222 L580 222 L580 202" stroke="#2e8b63"/>
+        <line x1="580" y1="198" x2="670" y2="198" marker-end="url(#c)" stroke="#2e8b63"/>
+
+        <!-- the wall -->
+        <line x1="580" y1="118" x2="580" y2="150" stroke-width="2.4" opacity=".45"/>
+      </g>
+      <g font-size="12.5" fill="currentColor" text-anchor="middle">
+        <text x="94"  y="120">one cycle</text>
+        <text x="94"  y="136" font-size="10.5" opacity=".6">4 fields</text>
+        <text x="395" y="51"  fill="#c0742a">summary</text>
+        <text x="395" y="105" fill="#c0742a">thoughts — unhedged</text>
+        <text x="395" y="173" fill="#2e8b63">public_title</text>
+        <text x="395" y="227" fill="#2e8b63">public_body</text>
+        <text x="770" y="62"  fill="#c0742a">Telegram</text>
+        <text x="770" y="78"  font-size="10.5" fill="#c0742a" opacity=".8">private, to Nikunj</text>
+        <text x="770" y="194" fill="#2e8b63">the website</text>
+        <text x="770" y="210" font-size="10.5" fill="#2e8b63" opacity=".8">neutral, public</text>
+      </g>
+      <g font-size="10.5" fill="currentColor" opacity=".6" text-anchor="start">
+        <text x="594" y="138">no crossing</text>
+      </g>
+    </svg>
+    <figcaption>The split that keeps the agent candid without putting that candour on a
+      professional website. The charter tells it never to judge Nikunj's work on the
+      public side; <code>publish.py</code> enforces it by only ever reading the green
+      fields.</figcaption>
+  </figure>
+
+  <h2>From the agent's words to a live page</h2>
+
+  <p>The agent writes <em>text</em>. <code>publish.py</code> writes <em>HTML</em>, escaping
+    every string on the way through. That is why the page can say the agent cannot put
+    anything but words there: it has no mechanism to emit a tag, a link or a script.</p>
+
+  <figure>
+    <svg viewBox="0 0 900 180" role="img" aria-label="Agent text is escaped into HTML, written to two paths only, committed and pushed, then deployed over FTPS to the live subdomain.">
+      <defs>
+        <marker id="d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+                markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="16" y="56" width="124" height="52" rx="9"/>
+        <rect x="192" y="56" width="140" height="52" rx="9" stroke="#2e8b63"/>
+        <rect x="384" y="56" width="140" height="52" rx="9" stroke="#c0742a"/>
+        <rect x="576" y="56" width="124" height="52" rx="9"/>
+        <rect x="752" y="56" width="132" height="52" rx="9" stroke="#7fa3d8"/>
+        <line x1="140" y1="82" x2="186" y2="82" marker-end="url(#d)"/>
+        <line x1="332" y1="82" x2="378" y2="82" marker-end="url(#d)"/>
+        <line x1="524" y1="82" x2="570" y2="82" marker-end="url(#d)"/>
+        <line x1="700" y1="82" x2="746" y2="82" marker-end="url(#d)"/>
+      </g>
+      <g font-size="12.5" fill="currentColor" text-anchor="middle">
+        <text x="78"  y="80">agent text</text>
+        <text x="78"  y="96" font-size="10.5" opacity=".6">plain strings</text>
+        <text x="262" y="80" fill="#2e8b63">escape → HTML</text>
+        <text x="262" y="96" font-size="10.5" fill="#2e8b63" opacity=".8">publish.py</text>
+        <text x="454" y="80" fill="#c0742a">stage 2 paths</text>
+        <text x="454" y="96" font-size="10.5" fill="#c0742a" opacity=".8">abort if more</text>
+        <text x="638" y="80">git push</text>
+        <text x="638" y="96" font-size="10.5" opacity=".6">main</text>
+        <text x="818" y="80" fill="#7fa3d8">live</text>
+        <text x="818" y="96" font-size="10.5" fill="#7fa3d8" opacity=".8">~20s, FTPS</text>
+      </g>
+      <g font-size="10.5" fill="currentColor" opacity=".55" text-anchor="middle">
+        <text x="163" y="48">escaped</text>
+        <text x="355" y="48">one file</text>
+        <text x="547" y="48">Actions</text>
+      </g>
+    </svg>
+    <figcaption>The amber box is the guard that matters. The site repo holds dozens of
+      other modified files; <code>deploy.py</code> stages only the agent's own page and
+      aborts the push if anything else ended up staged.</figcaption>
+  </figure>
+
+  <h2>Memory</h2>
+
+  <p>Four SQLite tables. <code>cycles</code> is the journal, one row per wake-up.
+    <code>notes</code> is what it chose to carry forward, keyed so a later cycle updates
+    rather than duplicates. <code>proposals</code> is the queue of things waiting on
+    Nikunj. <code>tool_calls</code> is the audit log, including every refusal.</p>
+
+  <p>Each cycle begins by reading the last eight entries, all its notes, and the open
+    proposals. That recall is the whole of its continuity — it is why cycle two could
+    notice an anomaly from cycle one and go investigate it.</p>
+
+  <h2>The files</h2>
+
+  <table>
+    <thead><tr><th>File</th><th>Lines</th><th>Responsibility</th></tr></thead>
+    <tbody>
+      <tr><td><code>CHARTER.md</code></td><td>96</td><td>Its goal, its boundary and its voice, in plain English. Prepended to every prompt.</td></tr>
+      <tr><td><code>agent/brain.py</code></td><td>183</td><td>The two model calls, and the JSON parser that survives chatty replies.</td></tr>
+      <tr><td><code>agent/loop.py</code></td><td>144</td><td>One cycle end to end. Assembles context, runs the plan, saves, reports.</td></tr>
+      <tr><td><code>agent/tools.py</code></td><td>263</td><td>The six functions, the host allowlist, and the gauntlet every call passes.</td></tr>
+      <tr><td><code>agent/memory.py</code></td><td>159</td><td>The four tables and the queries over them.</td></tr>
+      <tr><td><code>agent/telegram.py</code></td><td>131</td><td>Send-only reporting. No command handling, no polling.</td></tr>
+      <tr><td><code>agent/publish.py</code></td><td>593</td><td>Escapes text into the page, including the hand-built SVG instrument.</td></tr>
+      <tr><td><code>agent/deploy.py</code></td><td>74</td><td>Commits and pushes, staging two paths and nothing else.</td></tr>
+      <tr><td><code>run.py</code></td><td>179</td><td>The CLI and the sleep loop.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>The front end</h2>
+
+  <p>There isn't one, in the usual sense. The public page is a single static HTML file
+    with no JavaScript at all — the instrument is hand-written SVG whose geometry was
+    computed once when the page was generated, animated purely in CSS. It is served from
+    its own subdomain, self-contained, because the main site sets
+    <code>Cross-Origin-Resource-Policy: same-origin</code> and would otherwise block the
+    subdomain from loading its stylesheet.</p>
+
+  <p>The real interface is Telegram, and it points one way. <code>telegram.py</code>
+    makes exactly one read in its life — a single <code>getUpdates</code> to learn the
+    chat id, cached and never repeated. Message text is never parsed, so nothing anyone
+    sends that bot can reach the agent. The only control is turning it off.</p>
+
+  <h2>Where it is weak</h2>
+
+  <div class="card">
+    <p><strong>It can be confidently wrong.</strong> On its first live cycle it reported
+      that Nikunj's GitHub was empty and nothing backed his project figures. The account
+      it checked was a guess made from his name, because the fetch tool stripped HTML and
+      showed link text but not link addresses. It flagged its own uncertainty in the same
+      message, which is the behaviour the charter asks for, but the headline still went
+      out wrong. The tool now returns real URLs. <strong>A tool that hides information
+      will make an agent invent it.</strong></p>
+    <p style="margin-top:.8rem"><strong>It is not persistent across reboots.</strong> The
+      loop runs under <code>nohup</code>; a <code>launchd</code> job would survive sleep
+      and restart, and is not installed yet.</p>
+    <p style="margin-top:.8rem"><strong>Five minutes is expensive.</strong> Two model
+      calls a cycle is roughly 576 a day against the Claude subscription on the machine.</p>
+  </div>
+
+  <footer>
+    Meridian runs from <code>~/Documents/nikunj-agent</code>.
+    <code>python3 run.py status</code> · <code>run.py proposals</code> ·
+    <code>run.py stop</code>.
+  </footer>
+
+</div>
+</body>
+</html>

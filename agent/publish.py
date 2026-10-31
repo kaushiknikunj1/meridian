@@ -17,11 +17,12 @@ from __future__ import annotations
 import datetime as dt
 import html
 import re
+import os
 from pathlib import Path
 
 from agent import memory
 
-SITE = Path.home() / "Documents" / "GitHub" / "nikunjkaushik.com"
+SITE = Path(os.environ.get("MERIDIAN_SITE_DIR", Path.home() / "nikunjkaushik.com"))
 
 #: The subdomain's document root. Hostgator maps meridian.nikunjkaushik.com to
 #: public_html/meridian, and the deploy action uploads this repo into public_html,

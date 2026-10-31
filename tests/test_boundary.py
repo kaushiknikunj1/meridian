@@ -1,7 +1,7 @@
 """Meridian explores the open web. It must never reach this machine.
 
 Each test here corresponds to a way an agent with an open fetch tool could end up
-reading Nikunj's own systems — Vortex on localhost, the LAN, cloud metadata, local
+reading the owner's own systems — private apps on localhost, the LAN, cloud metadata, local
 files. If one of these fails, the agent can see something it must not.
 
 Run:  python3 tests/test_boundary.py
@@ -46,11 +46,11 @@ def allowed(label: str, url: str) -> None:
         check(label, False, str(exc))
 
 
-print("\n  Vortex and everything else on this machine")
-blocked("Vortex API on loopback",        "http://127.0.0.1:8000/summary")
-blocked("Vortex web on loopback",        "http://127.0.0.1:3000/")
-blocked("Vortex Postgres",               "http://127.0.0.1:5432/")
-blocked("Vortex Redis",                  "http://127.0.0.1:6379/")
+print("\n  loopback services and everything else on this machine")
+blocked("private API on loopback",       "http://127.0.0.1:8000/summary")
+blocked("private web app on loopback",   "http://127.0.0.1:3000/")
+blocked("Postgres on loopback",          "http://127.0.0.1:5432/")
+blocked("Redis on loopback",             "http://127.0.0.1:6379/")
 blocked("localhost by name",             "http://localhost:8000/")
 blocked("loopback by IPv6",              "http://[::1]:8000/")
 blocked("0.0.0.0",                       "http://0.0.0.0:8000/")
@@ -60,11 +60,11 @@ blocked("private 10/8",                  "http://10.0.0.5/")
 blocked("private 172.16/12",             "http://172.16.4.4/")
 blocked("private 192.168/16",            "http://192.168.1.1/")
 blocked("link-local / metadata",         "http://169.254.169.254/latest/meta-data/")
-blocked("mDNS .local name",              "http://nikunj-mac.local/")
-blocked(".internal name",                "http://vortex.internal/")
+blocked("mDNS .local name",              "http://some-mac.local/")
+blocked(".internal name",                "http://app.internal/")
 
 print("\n  schemes that are not the web")
-blocked("file:// local disk",            "file:///Users/nikunjkaushik/.ssh/id_rsa")
+blocked("file:// local disk",            "file:///Users/someone/.ssh/id_rsa")
 blocked("ftp://",                        "ftp://example.com/")
 blocked("gopher:// (SSRF classic)",      "gopher://127.0.0.1:6379/_INFO")
 
@@ -80,7 +80,7 @@ allowed("a site never seen before",      "https://www.bbc.co.uk/news")
 print("\n  the fetch tool refuses the same things")
 cid = memory.start_cycle()
 for label, url in (
-    ("fetch refuses Vortex", "http://127.0.0.1:8000/summary"),
+    ("fetch refuses loopback", "http://127.0.0.1:8000/summary"),
     ("fetch refuses file://", "file:///etc/passwd"),
 ):
     try:

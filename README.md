@@ -8,13 +8,13 @@ Its purpose is to check claims against primary sources and say what is actually 
 including "nothing happened" when that is the truth. It chooses what to look at and when
 to wake.
 
-It is **separate from the internal agent org** in Project Vortex. No shared database,
+It is **separate from any other system on the machine**. No shared database,
 no shared credentials, no network path between them. Meridian knows nothing about
-Nikunj's finances, vault or private systems, and has no tool that could reach them.
+the owner's private systems, and has no tool that could reach them.
 
 ## Reporting — Telegram, one way
 
-Every cycle is reported to Nikunj's Telegram (`@mr_nk_claude_bot`), including the quiet
+Every cycle is reported to the owner's Telegram bot, including the quiet
 ones. Nothing is published to the website; `MERIDIAN_PUBLISH` is off by default.
 
 The channel is **send-only by construction**. There is no command handling and no
@@ -133,9 +133,9 @@ the hostname and judges the resulting **IP**, so a public name pointing at 127.0
 is refused too. Loopback, private ranges, link-local (cloud metadata), non-web schemes
 and non-web ports are all blocked.
 
-That boundary exists because this Mac runs Vortex — Nikunj's financial app — on
-localhost. "Any URL" would otherwise include his own bank data. `tests/test_boundary.py`
-holds 33 assertions proving it cannot reach Vortex, the LAN, metadata, local files, or
+That boundary exists because the machine it runs on also hosts private services on
+localhost. "Any URL" would otherwise include them. `tests/test_boundary.py`
+holds 33 assertions proving it cannot reach loopback services, the LAN, metadata, local files, or
 anything through a non-web scheme, and that no tool exists which reads this machine at
 all.
 

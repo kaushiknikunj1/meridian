@@ -1,4 +1,4 @@
-"""One-way reporting to Nikunj's Telegram.
+"""One-way reporting to the owner's Telegram.
 
 Deliberately **send-only**. There is no command handling, no polling loop, no
 way for a message to reach Meridian. The single read this module performs is
@@ -21,8 +21,8 @@ import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 CHAT_CACHE = ROOT / "data" / "chat_id"
-#: Where the bot token already lives on this machine.
-TOKEN_ENV = pathlib.Path.home() / "Documents" / "GitHub" / "2026_Plan" / ".env"
+#: Optional .env file holding TELEGRAM_BOT_TOKEN=... (override with MERIDIAN_TOKEN_FILE).
+TOKEN_ENV = pathlib.Path(os.environ.get("MERIDIAN_TOKEN_FILE", ROOT / ".env"))
 TIMEOUT = 15
 LIMIT = 4096  # Telegram's hard cap on a message
 
